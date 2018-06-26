@@ -1,0 +1,49 @@
+model "modeloTCC.mod";
+data "tysutia/exemplo_tysutia.dat";
+
+
+let {e in E} QT[e] := L[e]*q;
+
+#let {i in N, (ii, e) in dn, is in S: i=ii and i!=is} dem[i] := QP[i] + QT[e];
+
+let {i in N, (ii, e) in dn: i=ii} dem[i] := QP[i] + QT[e];
+
+
+
+#set AB = setof {(i, e) in dn}} (i, e);
+#display AB;
+
+
+option solver baron;
+objective CUSTO;
+solve;
+
+# https://groups.google.com/forum/#!topic/ampl/PcHyAeZ4AhM
+display _ampl_time;
+display _ampl_elapsed_time;
+display _ampl_system_time;
+display _total_solve_time;
+
+set A = setof {(i,e1) in dp, (j,e2) in dn: e1 = e2} (j,e2,i);
+
+expand RQD2;
+
+param h{E};
+param J{E};
+param QJ{E};
+param v{E};
+
+let {(i,e,j) in A} h[e] := H[j] - H[i];
+let {(i,e,j) in A} J[e] := h[e]/L[e];
+let {e in E} QJ[e] := Q[e] - QT[e];
+let {e in E} v[e] := 4*QF[e]/(pi*D[e]**2);
+
+for{ ee in E, (i,e,j) in A: ee=e} 
+{
+	printf "%8.6f \t %8.6f \t %8.6f \t %8.6f \t %8.4f \t %8.4f \t %8.4f \t %8.4f \t %8.4f \t %8.4f \n", 
+	Q[e], QT[e], QJ[e], QF[e], D[e], J[e], h[e], v[e], H[j], H[i] > tysutia/output_exemplo_tysutia.txt;
+};
+
+display v;
+
+quit;

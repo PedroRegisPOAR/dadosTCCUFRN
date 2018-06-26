@@ -1,0 +1,46 @@
+model "modeloTCC.mod";
+data "pedro/exemplo_pedro.dat";
+
+let {e in E} QT[e] := L[e]*q;
+let {i in N, (ii, e) in dn: i=ii} dem[i] := QP[i] + QT[e];
+
+
+option solver baron;
+#option solver knitro;
+objective CUSTO;
+solve;
+
+
+#display {i in N union S, (i2,j2,e) in NOS: i = i2} 
+
+# https://groups.google.com/forum/#!topic/ampl/PcHyAeZ4AhM
+#display _ampl_time
+#display _total_solve_elapsed_time;
+#display _ampl_elapsed_time;
+#display _total_solve_time;
+
+
+display _ampl_elapsed_time;
+display _ampl_system_time;
+display _total_solve_time;
+
+set A = setof {(i,e1) in dp, (j,e2) in dn: e1 = e2} (j,e2,i);
+
+param h{E};
+param J{E};
+param QJ{E};
+param v{E};
+
+let {(i,e,j) in A} h[e] := H[j] - H[i];
+let {(i,e,j) in A} J[e] := h[e]/L[e];
+let {e in E} QJ[e] := Q[e] - QT[e];
+let {e in E} v[e] := 4*Q[e]/(pi*D[e]**2);
+
+for{ (i,e,j) in A} 
+{
+	printf "%8.4f \t %8.4f \t %8.4f \t %8.4f \t %8.4f \t %8.6f \t %8.4f \t %8.4f \t %8.4f \t %8.4f \n", 
+	Q[e], QT[e], QJ[e], QF[e], D[e], J[e], h[e], v[e], H[j], H[i] > pedro/output_exemplo_pedro.txt;
+};
+
+
+quit;
