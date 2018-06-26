@@ -37,42 +37,41 @@ var H{N union S} >= 0;
 var y{E, T} binary;
 var yh{N union S} binary;
 
+
+
+
 set NEN = setof {(i,e1) in dp, (j,e2) in dn: e1 = e2} (j,e2,i);
 
 
+minimize CUSTO: sum{e in E} D[e];
 
-minimize CUSTO: sum{ e in E} D[e];
 
 subject to FLOW {i in N}: sum{ (ii, e) in dn: i = ii} Q[e] - sum{ (ii,e) in dp: i = ii} Q[e] = dem[i];
 
 subject to RQF {e in E}: QF[e] = (2*Q[e] - QT[e])/2;
 
-subject to HW { (j,e,i) in NEN}: H[i] - H[j] = w*(QF[e]**(a))*L[e]*(C**(-a))/D[e]**b;
+subject to HW {(j,e,i) in NEN}: H[i] - H[j] = w*(QF[e]**(a))*L[e]*(C**(-a))/D[e]**b;
+
+# Reservatórios fixos.
+subject to Rhs {i in S}: H[i] = hs[i];
 
 
-subject to Rhs { i in S}: H[i] = hs[i];
+subject to RQD1 {e in E}: sum{t in T} y[e,t] = 1;
+subject to RQD2 {e in E}: sum{t in T} QD[t]*y[e,t] >= QF[e];
+subject to RQD3 {e in E}: sum{t in T} TD[t]*y[e,t] = D[e];
 
 
-#subject to UMC {e in E}: sum{j in T} y[e,j] = 1;
-subject to UMC2 {e in E}: sum{j in T} TD[j]*y[e,j] = D[e];
-
-subject to RQD {e in E}: sum{j in T} y[e,j] = 1;
-subject to RQD2 {e in E}: sum{j in T} QD[j]*y[e,j] >= QF[e];
-
-subject to DMIN { e in E}: D[e] >= dmin;
-subject to DMAX { e in E}: D[e] <= dmax;
-
-subject to PMIN { i in N}: H[i] >= pmin + Z[i];
-subject to PMAX { i in N}: H[i] <= pmax + Z[i];
+subject to DMIN {e in E}: D[e] >= dmin;
+subject to DMAX {e in E}: D[e] <= dmax;
 
 
-#subject to RPMIN1: sum{i in N union S} yh[i] = 1;
-##subject to RPMIN2 {i in N union S}: (H[i] - Z[i] - pmin)*yh[i] = 0;
-
-##subject to RPMIN2 {i in N union S}: H[i]*yh[i] = (pmin + Z[i])*yh[i];
-#subject to RPMIN2 {i in N union S}: (H[i] - Z[i])*yh[i] = pmin*yh[i];
+subject to PMIN {i in N}: H[i] >= pmin + Z[i];
+subject to PMAX {i in N}: H[i] <= pmax + Z[i];
 
 
-##subject to R {(i,j,e) in NOS}: (H[i] - Z[i] + (Z[i] - Z[j] ) - (H[j] - H[i]) )*yh[i] = pmin*yh[i];
+# Obriga que exatamente 1 dos yh seja igual a 1.
+subject to RPMIN1: sum{i in N union S} yh[i] = 1;
 
 
+# Força que um dos trechos da rede tenha a pressão mínima
+subject to RPMIN2 {i in N union S}: (H[i] - Z[i] - pmin)*yh[i] = 0;
